@@ -18,6 +18,7 @@ public class GameManager : MonoBehaviour {
     const int kMaxTextLineCount = 10;
 
     int[] secretCode = new int[kCodeDigitCount];
+    int secretCodeNumber;
     Difficulty difficulty;
     List<int> userCode = new List<int>(kCodeDigitCount);
     int selectedDigitIndex;
@@ -25,6 +26,7 @@ public class GameManager : MonoBehaviour {
     int hintsTextLineCount;
     float hintsTextPanelHeight;
     float startTextOffsetY;
+    RectTransform hintsTextRectTransform;
 
     public enum Difficulty {
         Easy,
@@ -35,16 +37,21 @@ public class GameManager : MonoBehaviour {
         GenerateSecretCode();
         livesText.text = "Essais restant: " + lives;
         hintsTextPanelHeight = hintsTextPanel.rect.height;
-        startTextOffsetY = hintsText.rectTransform.offsetMax.y;
+        hintsTextRectTransform = hintsText.rectTransform;
+        startTextOffsetY = hintsTextRectTransform.offsetMax.y;
         Debug.Log(secretCode[0].ToString() + secretCode[1] + secretCode[2] + secretCode[3]);
+        Debug.Log(secretCodeNumber);
     }
 
     void GenerateSecretCode() {
         List<int> possibleDigits = new List<int>(allTheDigits);
-        for (int i = 0; i < kCodeDigitCount; i++) {
+        int digitRank = 1;
+        for (int i = kCodeDigitCount - 1; i >= 0; i--) {
             int randomIndex = Random.Range(0, possibleDigits.Count);
             secretCode[i] = possibleDigits[randomIndex];
+            secretCodeNumber += possibleDigits[randomIndex] * digitRank;
             possibleDigits.RemoveAt(randomIndex);
+            digitRank *= 10;
         }
     }
 
@@ -83,31 +90,36 @@ public class GameManager : MonoBehaviour {
         hintsText.text += "Il y a " + cowsCount + " vache(s) et " + bullsCount + " taureau(x).\n";
         hintsTextLineCount++;
         if (bullsCount == kCodeDigitCount) {
-            Debug.Log("Vous avez gagné !!");
+            hintsText.text += "<color=yellow>Vous avez gagné !!</color>";
         } else {
             lives--;
             if (lives > 0) {
                 livesText.text = "Essais restant: " + lives;
                 if (lives == 2) {
-                    hintsText.text += "Aide: Le chiffre " + secretCode[0] + " est en première position.\n";
+                    hintsText.text += "<color=green>Aide:</color> Le chiffre " + secretCode[0] +
+                        " est en première position.\n";
                     hintsTextLineCount++;
                 } else if (lives == 1) {
-                    hintsText.text += "Aide: Le chiffre " + secretCode[3] + " est en dernière position.\n";
+                    hintsText.text += "<color=green>Aide:</color> Le chiffre " + secretCode[3] +
+                        " est en dernière position.\n";
                     hintsTextLineCount++;
                 }
             } else {
-                Debug.Log("Vous avez perdu ! Le code était: ");
+                hintsText.text += "<color=red>Vous avez perdu !</color> Le code était: <color=orange>" +
+                    secretCodeNumber + "</color>";
             }
         }
         scrollbar.size = Mathf.Min(1f, (float)kMaxTextLineCount / hintsTextLineCount);
+        if (scrollbar.size < 1f) {
+            UpdateScrolling(1f);
+            scrollbar.value = 1f;
+        }
     }
 
-    public void OnScrollbarChange(float t) {
+    public void UpdateScrolling(float t) {
         float overflowTextHeight = hintsText.preferredHeight - hintsTextPanelHeight;
-
-        RectTransform rectTransform = hintsText.rectTransform;
         float newOffsetY = Mathf.Lerp(startTextOffsetY, overflowTextHeight - startTextOffsetY, t);
-        rectTransform.offsetMax = new Vector2(0f, newOffsetY);
+        hintsTextRectTransform.offsetMax = new Vector2(0f, newOffsetY);
     }
 
     void Restart() {
