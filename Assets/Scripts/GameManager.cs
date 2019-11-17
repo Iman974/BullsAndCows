@@ -3,14 +3,17 @@ using System.Collections.Generic;
 using TMPro;
 using System.Linq;
 using UnityEngine.UI;
+using UnityEngine.Events;
 
 public class GameManager : MonoBehaviour {
 
-    [SerializeField] TMP_Text[] digitTexts = new TMP_Text[kCodeDigitCount];
+    [SerializeField] Image[] digitDisplayImage = new Image[kCodeDigitCount];
     [SerializeField] TMP_Text hintsText = null;
     [SerializeField] RectTransform hintsTextPanel = null;
     [SerializeField] TMP_Text livesText = null;
     [SerializeField] Scrollbar scrollbar = null;
+    [SerializeField] UnityEvent onGameOverEvent = null;
+    [SerializeField] Color selectedDigitColor = Color.gray;
 
     readonly int[] allTheDigits = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     const int kCodeDigitCount = 4;
@@ -27,6 +30,7 @@ public class GameManager : MonoBehaviour {
     float hintsTextPanelHeight;
     float startTextOffsetY;
     RectTransform hintsTextRectTransform;
+    TMP_Text[] digitTexts = new TMP_Text[kCodeDigitCount];
 
     public enum Difficulty {
         Easy,
@@ -39,7 +43,9 @@ public class GameManager : MonoBehaviour {
         hintsTextPanelHeight = hintsTextPanel.rect.height;
         hintsTextRectTransform = hintsText.rectTransform;
         startTextOffsetY = hintsTextRectTransform.offsetMax.y;
-        Debug.Log(secretCode[0].ToString() + secretCode[1] + secretCode[2] + secretCode[3]);
+        for (int i = 0; i < kCodeDigitCount; i++) {
+            digitTexts[i] = digitDisplayImage[i].GetComponentInChildren<TMP_Text>();
+        }
         Debug.Log(secretCodeNumber);
     }
 
@@ -66,7 +72,15 @@ public class GameManager : MonoBehaviour {
             userCode[selectedDigitIndex] = inputDigit;
         }
         digitTexts[selectedDigitIndex].text = inputDigit.ToString();
-        selectedDigitIndex = (selectedDigitIndex + 1) % kCodeDigitCount;
+        SetSelectedDigitIndex((selectedDigitIndex + 1) % kCodeDigitCount);
+    }
+
+    public void SetSelectedDigitIndex(int index) {
+        selectedDigitIndex = index;
+        for (int i = 0; i < kCodeDigitCount; i++) {
+            digitDisplayImage[i].color = Color.white;
+        }
+        digitDisplayImage[index].color = selectedDigitColor;
     }
 
     public void ValidateUserCode() {
@@ -91,6 +105,7 @@ public class GameManager : MonoBehaviour {
         hintsTextLineCount++;
         if (bullsCount == kCodeDigitCount) {
             hintsText.text += "<color=yellow>Vous avez gagné !!</color>";
+            onGameOverEvent.Invoke();
         } else {
             lives--;
             if (lives > 0) {
@@ -107,6 +122,7 @@ public class GameManager : MonoBehaviour {
             } else {
                 hintsText.text += "<color=red>Vous avez perdu !</color> Le code était: <color=orange>" +
                     secretCodeNumber + "</color>";
+                onGameOverEvent.Invoke();
             }
         }
         scrollbar.size = Mathf.Min(1f, (float)kMaxTextLineCount / hintsTextLineCount);
@@ -122,12 +138,16 @@ public class GameManager : MonoBehaviour {
         hintsTextRectTransform.offsetMax = new Vector2(0f, newOffsetY);
     }
 
-    void Restart() {
+    public void Restart() {
         userCode.Clear();
         for (int i = 0; i < kCodeDigitCount; i++) {
             digitTexts[i].text = string.Empty;
         }
         lives = kMaxTryCount;
+        livesText.text = lives.ToString();
         hintsTextLineCount = 0;
+        hintsText.text = string.Empty;
+        scrollbar.size = 1f;
+        hintsTextRectTransform.offsetMax = new Vector2(0f, startTextOffsetY);
     }
 }
