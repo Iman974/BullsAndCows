@@ -46,12 +46,12 @@ public class GameManager : MonoBehaviour {
         for (int i = 0; i < kCodeDigitCount; i++) {
             digitTexts[i] = digitDisplayImage[i].GetComponentInChildren<TMP_Text>();
         }
-        Debug.Log(secretCodeNumber);
     }
 
     void GenerateSecretCode() {
         List<int> possibleDigits = new List<int>(allTheDigits);
         int digitRank = 1;
+        secretCodeNumber = 0;
         for (int i = kCodeDigitCount - 1; i >= 0; i--) {
             int randomIndex = Random.Range(0, possibleDigits.Count);
             secretCode[i] = possibleDigits[randomIndex];
@@ -95,33 +95,29 @@ public class GameManager : MonoBehaviour {
                 } else {
                     cowsCount++;
                     if (difficulty == Difficulty.Easy) {
-                        hintsText.text += userCode[i] + " est dans le code !\n";
-                        hintsTextLineCount++;
+                        AddHintText(userCode[i] + " est dans le code !\n");
                     }
                 }
             }
         }
-        hintsText.text += "Il y a " + cowsCount + " vache(s) et " + bullsCount + " taureau(x).\n";
-        hintsTextLineCount++;
+        AddHintText("Il y a " + cowsCount + " vache(s) et " + bullsCount + " taureau(x).\n");
         if (bullsCount == kCodeDigitCount) {
-            hintsText.text += "<color=yellow>Vous avez gagné !!</color>";
+            AddHintText("<color=yellow>Vous avez gagné !!</color>");
             onGameOverEvent.Invoke();
         } else {
             lives--;
+            livesText.text = "Essais restant: " + lives;
             if (lives > 0) {
-                livesText.text = "Essais restant: " + lives;
                 if (lives == 2) {
-                    hintsText.text += "<color=green>Aide:</color> Le chiffre " + secretCode[0] +
-                        " est en première position.\n";
-                    hintsTextLineCount++;
+                    AddHintText("<color=green>Aide:</color> Le chiffre " + secretCode[0] +
+                        " est en première position.\n");
                 } else if (lives == 1) {
-                    hintsText.text += "<color=green>Aide:</color> Le chiffre " + secretCode[3] +
-                        " est en dernière position.\n";
-                    hintsTextLineCount++;
+                    AddHintText("<color=green>Aide:</color> Le chiffre " + secretCode[3] +
+                        " est en dernière position.\n");
                 }
             } else {
-                hintsText.text += "<color=red>Vous avez perdu !</color> Le code était: <color=orange>" +
-                    secretCodeNumber + "</color>";
+                AddHintText("<color=red>Vous avez perdu !</color> Le code était: <color=orange>" +
+                    secretCodeNumber + "</color>");
                 onGameOverEvent.Invoke();
             }
         }
@@ -130,6 +126,11 @@ public class GameManager : MonoBehaviour {
             UpdateScrolling(1f);
             scrollbar.value = 1f;
         }
+    }
+
+    void AddHintText(string text) {
+        hintsText.text += text;
+        hintsTextLineCount++;
     }
 
     public void UpdateScrolling(float t) {
@@ -144,10 +145,11 @@ public class GameManager : MonoBehaviour {
             digitTexts[i].text = string.Empty;
         }
         lives = kMaxTryCount;
-        livesText.text = lives.ToString();
+        livesText.text = "Essais restant: " + lives;
         hintsTextLineCount = 0;
         hintsText.text = string.Empty;
         scrollbar.size = 1f;
         hintsTextRectTransform.offsetMax = new Vector2(0f, startTextOffsetY);
+        GenerateSecretCode();
     }
 }
