@@ -66,6 +66,12 @@ public class GameManager : MonoBehaviour {
     }
 
     public void SetUserCodeDigit(int inputDigit) {
+        if (userCode.Contains(inputDigit)) {
+            if (userCode[selectedDigitIndex] == inputDigit) {
+                SetSelectedDigitIndex((selectedDigitIndex + 1) % kCodeDigitCount);
+            }
+            return;
+        }
         if (userCode.Count < kCodeDigitCount) {
             userCode.Add(inputDigit);
         } else {
