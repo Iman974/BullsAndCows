@@ -33,6 +33,7 @@ public class GameManager : MonoBehaviour {
     RectTransform hintsTextRectTransform;
     TMP_Text[] digitTexts = new TMP_Text[kCodeDigitCount];
     int successCount;
+    bool hasDuplicateWarningTriggered;
 
     public enum Difficulty {
         Easy,
@@ -79,12 +80,6 @@ public class GameManager : MonoBehaviour {
     }
 
     public void SetUserCodeDigit(int inputDigit) {
-        if (userCode.Contains(inputDigit)) {
-            if (userCode[selectedDigitIndex] == inputDigit) {
-                SetSelectedDigitIndex((selectedDigitIndex + 1) % kCodeDigitCount);
-            }
-            return;
-        }
         userCode[selectedDigitIndex] = inputDigit;
         digitTexts[selectedDigitIndex].text = inputDigit.ToString();
         SetSelectedDigitIndex((selectedDigitIndex + 1) % kCodeDigitCount);
@@ -101,7 +96,16 @@ public class GameManager : MonoBehaviour {
     public void ValidateUserCode() {
         if (userCode.Contains(-1)) {
             return;
+        } else if (userCode.Distinct().Count() != kCodeDigitCount) {
+            if (!hasDuplicateWarningTriggered) {
+                AddHintText("<color=orange>Rappel:</color> Il ne peut pas y avoir " +
+                    "plusieurs fois le même chiffre.\n");
+                UpdateScrollbar();
+                hasDuplicateWarningTriggered = true;
+            }
+            return;
         }
+        hasDuplicateWarningTriggered = false;
         int bullsCount = 0, cowsCount = 0;
         AddHintText("Vous avez entré le code: " + userCode[0] + userCode[1] + userCode[2] +
             userCode[3] + "\n");
@@ -141,6 +145,10 @@ public class GameManager : MonoBehaviour {
                 onGameOverEvent.Invoke();
             }
         }
+        UpdateScrollbar();
+    }
+
+    void UpdateScrollbar() {
         scrollbar.size = Mathf.Min(1f, (float)kMaxTextLineCount / hintsTextLineCount);
         if (scrollbar.size < 1f) {
             UpdateScrolling(1f);
@@ -161,7 +169,7 @@ public class GameManager : MonoBehaviour {
     public void UpdateScrolling(float t) {
         float overflowTextHeight = hintsText.preferredHeight - hintsTextPanelHeight;
         float newOffsetY = Mathf.Lerp(startTextOffsetY, overflowTextHeight - startTextOffsetY, t);
-        hintsTextRectTransform.offsetMax = new Vector2(0f, newOffsetY);
+        hintsTextRectTransform.offsetMax = new Vector2(5f, newOffsetY);
     }
 
     public void Restart() {
