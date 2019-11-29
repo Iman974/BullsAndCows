@@ -14,6 +14,7 @@ public class GameManager : MonoBehaviour {
     [SerializeField] Scrollbar scrollbar = null;
     [SerializeField] UnityEvent onGameOverEvent = null;
     [SerializeField] Color selectedDigitColor = Color.gray;
+    [SerializeField] TMP_Text successCountText = null;
 
     readonly int[] allTheDigits = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     const int kCodeDigitCount = 4;
@@ -31,6 +32,7 @@ public class GameManager : MonoBehaviour {
     float startTextOffsetY;
     RectTransform hintsTextRectTransform;
     TMP_Text[] digitTexts = new TMP_Text[kCodeDigitCount];
+    int successCount;
 
     public enum Difficulty {
         Easy,
@@ -38,6 +40,7 @@ public class GameManager : MonoBehaviour {
     }
 
     void Start() {
+        LoadProgress();
         GenerateSecretCode();
         livesText.text = "Essais restant: " + lives;
         hintsTextPanelHeight = hintsTextPanel.rect.height;
@@ -46,6 +49,15 @@ public class GameManager : MonoBehaviour {
         for (int i = 0; i < kCodeDigitCount; i++) {
             digitTexts[i] = digitDisplayImage[i].GetComponentInChildren<TMP_Text>();
         }
+    }
+
+    void LoadProgress() {
+        successCount = PlayerPrefs.GetInt("successes", 0);
+        UpdateSuccessText();
+    }
+
+    void UpdateSuccessText() {
+        successCountText.text = "Nombre de codes trouvés: " + successCount;
     }
 
     void GenerateSecretCode() {
@@ -110,6 +122,9 @@ public class GameManager : MonoBehaviour {
         if (bullsCount == kCodeDigitCount) {
             AddHintText("<color=yellow>Vous avez gagné !!</color>");
             onGameOverEvent.Invoke();
+            successCount++;
+            UpdateSuccessText();
+            SaveProgress();
         } else {
             lives--;
             livesText.text = "Essais restant: " + lives;
@@ -134,6 +149,11 @@ public class GameManager : MonoBehaviour {
         }
     }
 
+    void SaveProgress() {
+        PlayerPrefs.SetInt("successes", successCount);
+        PlayerPrefs.Save();
+    }
+
     void AddHintText(string text) {
         hintsText.text += text;
         hintsTextLineCount++;
@@ -156,6 +176,7 @@ public class GameManager : MonoBehaviour {
         hintsText.text = string.Empty;
         scrollbar.size = 1f;
         hintsTextRectTransform.offsetMax = new Vector2(0f, startTextOffsetY);
+        SetSelectedDigitIndex(0);
         GenerateSecretCode();
     }
 }
