@@ -48,6 +48,7 @@ public class GameManager : MonoBehaviour {
         startTextOffsetY = hintsTextRectTransform.offsetMax.y;
         for (int i = 0; i < kCodeDigitCount; i++) {
             digitTexts[i] = digitDisplayImage[i].GetComponentInChildren<TMP_Text>();
+            userCode.Add(-1);
         }
     }
 
@@ -84,11 +85,7 @@ public class GameManager : MonoBehaviour {
             }
             return;
         }
-        if (userCode.Count < kCodeDigitCount) {
-            userCode.Add(inputDigit);
-        } else {
-            userCode[selectedDigitIndex] = inputDigit;
-        }
+        userCode[selectedDigitIndex] = inputDigit;
         digitTexts[selectedDigitIndex].text = inputDigit.ToString();
         SetSelectedDigitIndex((selectedDigitIndex + 1) % kCodeDigitCount);
     }
@@ -102,10 +99,12 @@ public class GameManager : MonoBehaviour {
     }
 
     public void ValidateUserCode() {
-        if (userCode.Count < kCodeDigitCount) {
+        if (userCode.Contains(-1)) {
             return;
         }
         int bullsCount = 0, cowsCount = 0;
+        AddHintText("Vous avez entré le code: " + userCode[0] + userCode[1] + userCode[2] +
+            userCode[3] + "\n");
         for (int i = 0; i < kCodeDigitCount; i++) {
             if (secretCode.Contains(userCode[i])) {
                 if (secretCode[i] == userCode[i]) {
@@ -166,8 +165,8 @@ public class GameManager : MonoBehaviour {
     }
 
     public void Restart() {
-        userCode.Clear();
         for (int i = 0; i < kCodeDigitCount; i++) {
+            userCode[i] = -1;
             digitTexts[i].text = string.Empty;
         }
         lives = kMaxTryCount;
